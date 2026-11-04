@@ -1,0 +1,722 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+enum UserRole {
+  RIDER
+  DRIVER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum DriverStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DriverAvailability {
+  ONLINE
+  OFFLINE
+  ON_TRIP
+}
+
+enum VehicleCategory {
+  BIKE
+  AUTO
+  CAR
+}
+
+enum VehicleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  DRIVING_LICENSE
+  VEHICLE_REGISTRATION
+  INSURANCE
+  PERMIT
+  IDENTITY_PROOF
+  ADDRESS_PROOF
+  PROFILE_PHOTO
+  VEHICLE_PHOTO
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RideStatus {
+  REQUESTED
+  OFFER_PENDING
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVING
+  DRIVER_ARRIVED
+  TRIP_STARTED
+  TRIP_COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  ONLINE
+  CASH
+  WALLET
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum PoolingStatus {
+  OPEN
+  MATCHED
+  FULL
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ScheduledRideStatus {
+  SCHEDULED
+  DRIVER_ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum NotificationType {
+  RIDE_UPDATE
+  PAYMENT
+  OFFER
+  SYSTEM
+  PROMOTION
+  SAFETY
+  SUPPORT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id          String     @id @default(uuid())
+  phone       String     @unique
+  email       String?    @unique
+  name        String?
+  avatarUrl   String?
+  role        UserRole   @default(RIDER)
+  status      UserStatus @default(ACTIVE)
+  isVerified  Boolean    @default(false)
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  riderProfile      RiderProfile?
+  driverProfile     DriverProfile?
+  rides             Ride[]           @relation("RiderRides")
+  driverRides       Ride[]           @relation("DriverRides")
+  payments          Payment[]
+  ratings           Rating[]         @relation("RaterRatings")
+  receivedRatings   Rating[]         @relation("RatedRatings")
+  reviews           Review[]         @relation("ReviewerReviews")
+  receivedReviews   Review[]         @relation("ReviewedReviews")
+  notifications     Notification[]
+  supportTickets    SupportTicket[]
+  complaints        Complaint[]      @relation("ComplainantComplaints")
+  complaintsAbout   Complaint[]      @relation("ComplaintAbout")
+  emergencyContacts EmergencyContact[]
+  auditLogs         AuditLog[]
+  scheduledRides    ScheduledRide[]
+  refreshTokens     RefreshToken[]
+  otpCodes          OtpCode[]
+  savedLocations    SavedLocation[]
+
+  @@index([phone])
+  @@index([role])
+  @@index([status])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@index([token])
+}
+
+model OtpCode {
+  id         String    @id @default(uuid())
+  phone      String
+  code       String
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone])
+  @@index([code])
+}
+
+model RiderProfile {
+  id               String          @id @default(uuid())
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredVehicle VehicleCategory?
+  totalRides       Int             @default(0)
+  totalSpent       Float           @default(0)
+  avgRating        Float           @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  poolingPassengers PoolingPassenger[]
+}
+
+model DriverProfile {
+  id               String             @id @default(uuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           DriverStatus       @default(PENDING)
+  availability     DriverAvailability @default(OFFLINE)
+  licenseNumber    String?
+  address          String?
+  totalRides       Int                @default(0)
+  totalEarnings    Float              @default(0)
+  avgRating        Float              @default(0)
+  currentLatitude  Float?
+  currentLongitude Float?
+  lastLocationAt   DateTime?
+  approvedAt       DateTime?
+  approvedBy       String?
+  rejectionReason  String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  documents       DriverDocument[]
+  vehicles        Vehicle[]
+  driverLocations DriverLocation[]
+  earnings        Earning[]
+
+  @@index([status])
+  @@index([availability])
+}
+
+model DriverDocument {
+  id              String         @id @default(uuid())
+  driverProfileId String
+  driverProfile   DriverProfile  @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  type            DocumentType
+  fileUrl         String
+  fileName        String
+  status          DocumentStatus @default(PENDING)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  rejectionReason String?
+  expiresAt       DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([driverProfileId])
+  @@index([status])
+}
+
+model Vehicle {
+  id              String          @id @default(uuid())
+  driverProfileId String
+  driverProfile   DriverProfile   @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  category        VehicleCategory
+  make            String
+  model           String
+  year            Int
+  color           String
+  plateNumber     String          @unique
+  status          VehicleStatus   @default(PENDING)
+  isActive        Boolean         @default(false)
+  seatingCapacity Int             @default(1)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  rides Ride[]
+
+  @@index([driverProfileId])
+  @@index([category])
+  @@index([status])
+}
+
+model DriverLocation {
+  id              String        @id @default(uuid())
+  driverProfileId String
+  driverProfile   DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  latitude        Float
+  longitude       Float
+  heading         Float?
+  speed           Float?
+  accuracy        Float?
+  timestamp       DateTime      @default(now())
+
+  @@index([driverProfileId])
+  @@index([timestamp])
+}
+
+model SavedLocation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  address   String
+  latitude  Float
+  longitude Float
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Ride {
+  id              String          @id @default(uuid())
+  riderId         String
+  rider           User            @relation("RiderRides", fields: [riderId], references: [id])
+  driverId        String?
+  driver          User?           @relation("DriverRides", fields: [driverId], references: [id])
+  vehicleId       String?
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id])
+  vehicleCategory VehicleCategory
+  status          RideStatus      @default(REQUESTED)
+
+  pickupAddress   String
+  pickupLatitude  Float
+  pickupLongitude Float
+  dropoffAddress  String
+  dropoffLatitude Float
+  dropoffLongitude Float
+
+  estimatedDistance Float?
+  estimatedDuration Int?
+  actualDistance    Float?
+  actualDuration   Int?
+
+  baseFare      Float?
+  suggestedFare Float?
+  finalFare     Float?
+  platformFee   Float?
+  driverEarning Float?
+
+  isPooling    Boolean @default(false)
+  isScheduled  Boolean @default(false)
+  isNegotiated Boolean @default(false)
+
+  requestedAt        DateTime  @default(now())
+  assignedAt         DateTime?
+  arrivedAt          DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  cancelledBy        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers       RideOffer[]
+  stops        RideStop[]
+  payments     Payment[]
+  ratings      Rating[]
+  reviews      Review[]
+  rideEvents   RideEvent[]
+  poolingGroup PoolingGroup?
+
+  @@index([riderId])
+  @@index([driverId])
+  @@index([status])
+  @@index([vehicleCategory])
+  @@index([createdAt])
+}
+
+model RideStop {
+  id        String    @id @default(uuid())
+  rideId    String
+  ride      Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  address   String
+  latitude  Float
+  longitude Float
+  order     Int
+  arrivedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([rideId])
+}
+
+model RideEvent {
+  id        String     @id @default(uuid())
+  rideId    String
+  ride      Ride       @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  status    RideStatus
+  metadata  Json?
+  createdAt DateTime   @default(now())
+
+  @@index([rideId])
+  @@index([createdAt])
+}
+
+model RideOffer {
+  id          String      @id @default(uuid())
+  rideId      String
+  ride        Ride        @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  driverId    String?
+  amount      Float
+  offeredBy   String
+  status      OfferStatus @default(PENDING)
+  expiresAt   DateTime
+  respondedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  history RideOfferHistory[]
+
+  @@index([rideId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model RideOfferHistory {
+  id        String      @id @default(uuid())
+  offerId   String
+  offer     RideOffer   @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  amount    Float
+  offeredBy String
+  status    OfferStatus
+  createdAt DateTime    @default(now())
+
+  @@index([offerId])
+}
+
+model PoolingGroup {
+  id                String        @id @default(uuid())
+  rideId            String        @unique
+  ride              Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  status            PoolingStatus @default(OPEN)
+  maxPassengers     Int           @default(3)
+  currentPassengers Int           @default(1)
+  routeGeometry     Json?
+  totalFare         Float?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  passengers PoolingPassenger[]
+
+  @@index([status])
+}
+
+model PoolingPassenger {
+  id               String       @id @default(uuid())
+  poolingGroupId   String
+  poolingGroup     PoolingGroup @relation(fields: [poolingGroupId], references: [id], onDelete: Cascade)
+  riderProfileId   String
+  riderProfile     RiderProfile @relation(fields: [riderProfileId], references: [id])
+  pickupAddress    String
+  pickupLatitude   Float
+  pickupLongitude  Float
+  dropoffAddress   String
+  dropoffLatitude  Float
+  dropoffLongitude Float
+  fareShare        Float?
+  estimatedSavings Float?
+  order            Int
+  pickedUpAt       DateTime?
+  droppedOffAt     DateTime?
+  createdAt        DateTime     @default(now())
+
+  @@index([poolingGroupId])
+  @@index([riderProfileId])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  rideId            String
+  ride              Ride          @relation(fields: [rideId], references: [id])
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  amount            Float
+  currency          String        @default("INR")
+  method            PaymentMethod @default(ONLINE)
+  status            PaymentStatus @default(PENDING)
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?       @unique
+  razorpaySignature String?
+  failureReason     String?
+  metadata          Json?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  refunds Refund[]
+
+  @@index([rideId])
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+}
+
+model Refund {
+  id               String       @id @default(uuid())
+  paymentId        String
+  payment          Payment      @relation(fields: [paymentId], references: [id])
+  amount           Float
+  reason           String?
+  status           RefundStatus @default(PENDING)
+  razorpayRefundId String?      @unique
+  processedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([paymentId])
+  @@index([status])
+}
+
+model Earning {
+  id              String        @id @default(uuid())
+  driverProfileId String
+  driverProfile   DriverProfile @relation(fields: [driverProfileId], references: [id])
+  rideId          String?
+  amount          Float
+  platformFee     Float
+  netAmount       Float
+  description     String?
+  date            DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  @@index([driverProfileId])
+  @@index([date])
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id])
+  raterId   String
+  rater     User     @relation("RaterRatings", fields: [raterId], references: [id])
+  ratedId   String
+  rated     User     @relation("RatedRatings", fields: [ratedId], references: [id])
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@unique([rideId, raterId])
+  @@index([ratedId])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id])
+  reviewerId String
+  reviewer   User     @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  reviewedId String
+  reviewed   User     @relation("ReviewedReviews", fields: [reviewedId], references: [id])
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@unique([rideId, reviewerId])
+  @@index([reviewedId])
+}
+
+model PricingRule {
+  id              String          @id @default(uuid())
+  vehicleCategory VehicleCategory
+  baseFare        Float
+  perKmRate       Float
+  perMinuteRate   Float
+  minimumFare     Float
+  maximumFare     Float?
+  surgeMultiplier Float           @default(1.0)
+  nightSurcharge  Float           @default(0)
+  peakSurcharge   Float           @default(0)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([vehicleCategory])
+  @@index([vehicleCategory, isActive])
+}
+
+model PlatformCommission {
+  id              String           @id @default(uuid())
+  vehicleCategory VehicleCategory?
+  percentage      Float
+  flatFee         Float            @default(0)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model ScheduledRide {
+  id               String              @id @default(uuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id])
+  vehicleCategory  VehicleCategory
+  pickupAddress    String
+  pickupLatitude   Float
+  pickupLongitude  Float
+  dropoffAddress   String
+  dropoffLatitude  Float
+  dropoffLongitude Float
+  scheduledAt      DateTime
+  estimatedFare    Float?
+  status           ScheduledRideStatus @default(SCHEDULED)
+  rideId           String?
+  notes            String?
+  reminderSent     Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model SupportTicket {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  subject     String
+  description String
+  category    String?
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  assignedTo  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+}
+
+model Complaint {
+  id            String       @id @default(uuid())
+  complainantId String
+  complainant   User         @relation("ComplainantComplaints", fields: [complainantId], references: [id])
+  aboutId       String
+  about         User         @relation("ComplaintAbout", fields: [aboutId], references: [id])
+  rideId        String?
+  subject       String
+  description   String
+  status        TicketStatus @default(OPEN)
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([complainantId])
+  @@index([aboutId])
+}
+
+model EmergencyContact {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  relation  String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  oldData   Json?
+  newData   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

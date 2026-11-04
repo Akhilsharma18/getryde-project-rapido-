@@ -1,0 +1,53 @@
+# GETRYDE Development Progress Tracker
+
+## Completed Phases
+
+- [x] **PHASE 1: Monorepo Setup**: Root package.json, pnpm workspace configuration, shared package, environment template, and base tsconfig.
+- [x] **PHASE 2: Application Configurations**: Next.js 15+ App Router config, NestJS config, Tailwind CSS with electric lime `#B9F227` brand styling.
+- [x] **PHASE 3: PostgreSQL & PostGIS Schema**: Comprehensive Prisma schema with 30+ relational entities, seed scripts for pricing rules and test accounts.
+- [x] **PHASE 4: Design System & Public Homepage**:
+  - GETRYDE Logo and custom icons
+  - Public Homepage with Hero, Vehicle options (Bike, Auto, Car), Real-time booking card
+  - Sections: Smart Negotiation, Smart Pooling, Driver Transparency, AI Assistant, Safety, Why GETRYDE, FAQ, Footer
+  - Removed obsolete "How to Use" section as requested for streamlined conversion
+  - Dedicated Android & mobile-friendly responsive bottom navigation bar (`MobileNav`)
+  - Touch-optimized vehicle pills, inputs, and safe-area responsive layouts
+  - About Us, Safety, and Contact pages
+- [x] **PHASE 5: Authentication & RBAC**:
+  - Phone OTP flow (Request OTP, Verify OTP, Register, Refresh Tokens)
+  - Zustand auth store with localStorage persistence
+  - Axios interceptor for JWT bearer tokens and refresh rotation
+- [x] **PHASE 6: Rider Experience**:
+  - Rider overview dashboard with trip stats and quick links
+  - Interactive booking flow with Leaflet OpenStreetMap live route tracking
+  - Rides history with search and invoice downloads
+  - Smart pooling corridor search and fare split
+  - Scheduled rides calendar and manager
+  - Razorpay payment checkout and wallet top-up
+  - Profile and emergency SOS contact management
+- [x] **PHASE 7: Driver Experience**:
+  - Driver console with Online/Offline toggle
+  - Live incoming ride request cards with upfront payout transparency
+  - Active trip navigation HUD (Arrived at pickup, Start with 4-digit OTP, Complete trip)
+  - Earnings dashboard with Recharts weekly payout trends and instant IMPS settlement
+  - Trip history and statements
+  - Vehicle management and KYC document review tracker
+- [x] **PHASE 8: Admin Dashboard**:
+  - Platform metrics (riders, drivers, gross revenue, 15% platform take)
+  - Driver KYC verification (Approve & Activate / Reject)
+  - Vehicle pricing and negotiation rule management
+  - Payments and Razorpay refund triggers
+  - Financial, safety, and pooling audit reports
+- [x] **PHASE 9: Map & Live Tracking**:
+  - Leaflet client component with dynamic marker clustering, polyline routing, and custom pins
+- [x] **PHASE 10-18: Core Backend Modules**:
+  - Auth module (`/api/auth`)
+  - Rides module (`/api/rides`) with validated state machine transitions
+  - Offers module (`/api/offers`) for fare negotiation
+  - Pooling module (`/api/pooling`)
+  - Payments module (`/api/payments`) with Razorpay order, verify, refund, and webhooks
+  - Assistant module (`/api/assistant`) with live database pricing tools
+  - Admin module (`/api/admin`)
+  - Socket.IO gateway (`events.gateway.ts`) with authenticated room management
+- [x] **PHASE 19-20: Documentation & Deployment**:
+  - Complete README, Architecture, API, Database, Deployment, and Security guides
