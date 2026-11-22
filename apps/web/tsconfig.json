@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@getryde/shared": ["../../packages/shared/src/index.ts"]
+      "@getryde/shared": ["./src/types/shared.ts", "../../packages/shared/src/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
