@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Solid background for Android adaptive icon mask -->
+  <rect width="512" height="512" fill="#111111"/>
+
+  <!-- Centered Safe Zone Graphic -->
+  <g transform="translate(25, 25)">
+    <!-- GET Badge -->
+    <rect x="96" y="150" width="130" height="74" rx="18" fill="#B9F227"/>
+    <text x="161" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="46" fill="#111111" text-anchor="middle">GET</text>
+
+    <!-- RYDE Text -->
+    <text x="244" y="204" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="56" fill="#FFFFFF">RYDE</text>
+    <circle cx="388" cy="202" r="8" fill="#B9F227"/>
+
+    <!-- Electric Lime Route Path -->
+    <path d="M 100 295 L 180 295 L 250 345 L 360 345" fill="none" stroke="#B9F227" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="100" cy="295" r="14" fill="#FFFFFF"/>
+    <circle cx="360" cy="345" r="14" fill="#B9F227"/>
+  </g>
+</svg>

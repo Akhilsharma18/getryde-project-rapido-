@@ -11,7 +11,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([
     {
       id: "USR-001",
-      name: "Aarav Sharma",
+      name: "Akhil Sharma",
       phone: "+91 98765 43210",
       email: "aarav@example.com",
       role: "RIDER",
@@ -20,7 +20,7 @@ export default function AdminUsersPage() {
     },
     {
       id: "USR-002",
-      name: "Priya Sundaram",
+      name: "virat kohli",
       phone: "+91 98221 44556",
       email: "priya@example.com",
       role: "RIDER",

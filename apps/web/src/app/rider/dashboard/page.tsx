@@ -59,7 +59,7 @@ export default function RiderDashboardPage() {
         <div className="space-y-2 relative z-10">
           <Badge variant="accent">Rider Hub</Badge>
           <h1 className="text-3xl font-black tracking-tight">
-            Hello, {user?.name || "Aarav"} 👋
+            Hello, {user?.name || "Akhil"} 👋
           </h1>
           <p className="text-gray-400 text-sm max-w-lg">
             Where would you like to travel today? Propose your fair price or split costs with smart

@@ -12,6 +12,7 @@
   - Removed obsolete "How to Use" section as requested for streamlined conversion
   - Dedicated Android & mobile-friendly responsive bottom navigation bar (`MobileNav`)
   - Touch-optimized vehicle pills, inputs, and safe-area responsive layouts
+  - Complete PWA (Progressive Web App) configured: Web App Manifest, Service Worker offline caching, 192/512px vector icons, and native install banner
   - About Us, Safety, and Contact pages
 - [x] **PHASE 5: Authentication & RBAC**:
   - Phone OTP flow (Request OTP, Verify OTP, Register, Refresh Tokens)
